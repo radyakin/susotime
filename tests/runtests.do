@@ -46,6 +46,23 @@ assert loctime[6]==66719000
 assert loctime[7]==41519000
 
 
+clear all
+set obs 4
+generate double t=.
+replace t=clock("2022-07-03 18:53:19", "YMDhms") - clock("1922-06-03 10:58:10.230", "YMDhms") in 1
+replace t=clock("2022-07-03 18:53:19", "YMDhms") - clock("2022-06-03 10:58:10.23", "YMDhms") in 2
+replace t=clock("2022-07-03 18:53:19.590", "YMDhms") - clock("2022-07-03 10:59:59.177", "YMDhms") in 3
+replace t=. in 4
+
+format t %21.0gc
+susotime readable_duration t , generate(r)
+list
+
+assert r[1]=="36555 07:55:08.770"
+assert r[2]=="30 07:55:08.770"
+assert r[3]=="0 07:53:20.413"
+assert r[4]=="."
+
 display "PASSED!"
 
 // END OF FILE

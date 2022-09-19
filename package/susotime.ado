@@ -1,3 +1,6 @@
+*** Sergiy Radyakin, 2022
+*** sradyakin@@worldbank.org
+
 program define susotime
   // Passes the execution to a subcommand of susotime
   version 14.0
@@ -99,11 +102,13 @@ program define _susotime_timestampz, rclass
   
   if clockpart(clock(`"`time'"',"hms"),"ms")==0 {
   	// if milliseconds are zero, omit them
-  	local ts=string(clock(`"`ds' `time'"',"YMDhms"), "%tcCCYY-NN-DD!THH:MM:SS!Z")
+  	local ts=string(clock(`"`ds' `time'"',"YMDhms"), ///
+	      "%tcCCYY-NN-DD!THH:MM:SS!Z")
   }
   else {
   	// include milliseconds if they are non-zero
-    local ts=string(clock(`"`ds' `time'"',"YMDhms"), "%tcCCYY-NN-DD!THH:MM:SS.sss!Z")
+    local ts=string(clock(`"`ds' `time'"',"YMDhms"), ///
+	      "%tcCCYY-NN-DD!THH:MM:SS.sss!Z")
   }
   
   if (`"`ts'"'==".") {
@@ -144,5 +149,59 @@ program define _susotime_timestampznow
   
   _susotime_timestampz, date(`"`cdate'"') time(`"`ctime'"')
 end
+
+program define _susotime_readable_duration
+/*
+    Generate human-readable duration in format DAYS HH:MM:SS.MS
+	
+	[short] - all durations are known to be short (no days). 
+	          Hence days are not in the output.
+	[vshort] - all durations are known to be short (no days or hours). 
+	          Hence days and hours are not in the output.
+	[ms] - data is measured with milliseconds precision (not in 
+	       Survey Solutions paradata, but useful for averages and other stats).
+*/
+
+	version 12.0
+	syntax varname, generate(string) [short] [vshort] [ms]
+	tempvar ddys dhrs dmin dsec msec
+	
+	generate long `ddys' = int(`varlist'/1000/60/60/24)
+	generate byte `dhrs' = int(`varlist'/1000/60/60 - `ddys'*24)
+	generate byte `dmin' = int(`varlist'/1000/60 - `ddys'*24*60 - `dhrs'*60)
+	generate byte `dsec' = int(`varlist'/1000 - `ddys'*24*60*60 - ///
+	                           `dhrs'*60*60 - `dmin'*60)
+	generate int  `msec' = mod(`varlist',1000)
+	
+	if (`"`vshort'"'!="") {
+		// VERY SHORT
+		generate `generate'= ///
+		  string(`dmin', "%02.0f") + ":" + ///
+		  string(`dsec', "%02.0f") + ///
+		  cond(`"`ms'"'=="","", "." + ///
+		  string(`msec', "%03.0f"))
+	}
+	else {
+		if (`"`short'"'=="") {
+			// NOT SHORT
+			generate `generate'= ///
+			  string(`ddys', "%07.0g") + " " + ///
+			  string(`dhrs', "%02.0f") + ":" + ///
+			  string(`dmin', "%02.0f") + ":" + ///
+			  string(`dsec', "%02.0f") + ///
+			  cond(`"`msec'"'=="","", "." + string(`msec', "%03.0f"))
+		}
+		else {
+			// SHORT
+			generate `generate'= ///
+			  string(`dhrs', "%02.0f") + ":" + ///
+			  string(`dmin', "%02.0f") + ":" + ///
+			  string(`dsec', "%02.0f") + ///
+			  cond(`"`msec'"'=="","", "." + string(`msec', "%03.0f"))
+		}
+	}
+	replace `generate' = "." if missing(`varlist')
+end
+
 
 // END OF FILE

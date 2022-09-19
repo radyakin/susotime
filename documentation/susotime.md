@@ -90,3 +90,22 @@ Obtain the current timestamp in the format suitable for the Survey Solutions API
 ```
 
 Note that since Stata does not report the current milliseconds, the milliseconds part of the returned timestamp will always be zero.
+
+### readable_duration
+Converts duration in milliseconds into a human-readable duration  in the following format: "DAYS HH:MM:SS.MS"
+
+**Input**:
+- durationvariable - variable containing period duration (in msec);
+- generate(string) - name of the new variable to be generated;
+- short (optional) - if specified, indicates that all durations are known to be short (no days). Hence days are not in the output.
+- vshort (optional) - if specified, indicates that all durations are known to be very short (no days or even hours). Hence days and hours are not in the output.
+- ms (optional) - if specified indicates that the data is measured with milliseconds precision (not in Survey Solutions paradata, but useful for averages and other stats).
+
+**Output**
+- generates a new variable with a human-readable duration of the period converted from the given duration variable.
+
+NB: Generated variable contains a dot if the duration was missing (any Stata's missing value).
+
+
+
+
